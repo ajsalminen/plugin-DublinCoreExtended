@@ -257,19 +257,44 @@ class DublinCoreExtended_Metadata_Finna implements OaiPmhRepository_Metadata_For
                 }
         }
 
+        
+        
+        // Expose collection or parent publication information for Finna
+
+        $collection = $item->getCollection();
+        
         if (in_array("Lehden nimi", $itemTypeFields)) {
             $dcCitations = $item->getElementTexts('Item Type Metadata','Lehden nimi');
-                foreach($dcCitations as $dcCitation)
-                {
-                    $parentPub = $qdc->appendNewElement('dc:relation', trim($dcCitation->text));
-                    $parentPub->setAttribute('type', 'ispartof'); 
-                    
-                }
+            foreach($dcCitations as $dcCitation)
+            {
+                $parentPub = trim($dcCitation->text);
+            }
+        
         }
+        
+        if ($collection || $parentPub) {
+            $collectionTitle = metadata($collection, array('Dublin Core', 'Title'));
+            if (!$collectionTitle && !empty($collection->name)) {
+                 $collectionTitle = $collection->name;
+            }
+
+            // Use "Lehden nimi" Item Type Metadata -field if available.
+            // If not, use collection title.
+            $parentPubOrCollection = !empty($parentPub) ? $parentPub : (!empty($collectionTitle) ? $collectionTitle : null);
+
+            
+            if ($parentPubOrCollection) {
+                 // The item is part of this collection.
+                 // Finna can treat this as the parent collection/series.
+                 $isPartOf = $qdc->appendNewElement('dc:relation', trim($parentPubOrCollection));
+                 $isPartOf->setAttribute('type', 'ispartof');
+            }
+        }
+        
 
         if (in_array("Lehden numero", $itemTypeFields)) {
             $dcNumbers = $item->getElementTexts('Item Type Metadata','Lehden numero');
-                foreach($dcNumbers as $dcNumbers)
+                foreach($dcNumbers as $dcNumber)
                 {
                     $parentNumber = $qdc->appendNewElement('dc:relation', trim($dcNumber->text));
                     $parentNumber->setAttribute('type', 'issue'); 
