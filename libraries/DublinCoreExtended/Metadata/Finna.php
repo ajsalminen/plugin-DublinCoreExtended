@@ -436,15 +436,31 @@ class DublinCoreExtended_Metadata_Finna implements OaiPmhRepository_Metadata_For
         
         if (get_option('oaipmh_repository_expose_files') && metadata($item, 'has files') && !$excludeFiles) {
             $files = $item->getFiles();
-                foreach ($files as $file) {
-                    $original = $qdc->appendNewElement('kk:file', $file->getWebPath('original'));
-                    $original->setAttribute('bundle','ORIGINAL');
-                    if($file->hasThumbnail()) {
-                        $thumbnail = $qdc->appendNewElement('kk:file', $file->getWebPath('thumbnail'));
-                        $thumbnail->setAttribute('bundle','THUMBNAIL');
-                    }
+        
+            $allowedImageMimeTypes = array('image/jpeg', 'image/jpg', 'image/png');
+        
+            foreach ($files as $file) {
+                $originalPath = $file->getWebPath('original');
+        
+                $original = $qdc->appendNewElement('kk:file', $originalPath);
+                $original->setAttribute('bundle', 'ORIGINAL');
+        
+                // LARGE - same URL, different bundle (Finna displays large images based on bundle="LARGE").
+                // Only create LARGE for JPEG/JPG and PNG images to avoid duplicating e.g. PDF files.
+                $mimeType = $file->mime_type;
+                if (in_array($mimeType, $allowedImageMimeTypes)) {
+                    $large = $qdc->appendNewElement('kk:file', $originalPath);
+                    $large->setAttribute('bundle', 'LARGE');
                 }
-            }        
+        
+                if ($file->hasThumbnail()) {
+                    $thumbnailPath = $file->getWebPath('thumbnail');
+                    $thumbnail = $qdc->appendNewElement('kk:file', $thumbnailPath);
+                    $thumbnail->setAttribute('bundle', 'THUMBNAIL');
+                }
+            }
+        }
+                   
  
     }
 
