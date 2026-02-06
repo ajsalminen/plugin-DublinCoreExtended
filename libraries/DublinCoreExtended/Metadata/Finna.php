@@ -272,7 +272,7 @@ class DublinCoreExtended_Metadata_Finna implements OaiPmhRepository_Metadata_For
         
         }
         
-        if ($collection || $parentPub) {
+        if ($collection || isset($parentPub)) {
             $collectionTitle = metadata($collection, array('Dublin Core', 'Title'));
             if (!$collectionTitle && !empty($collection->name)) {
                  $collectionTitle = $collection->name;
